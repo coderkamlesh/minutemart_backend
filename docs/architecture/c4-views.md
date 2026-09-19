@@ -116,6 +116,12 @@ delivery    -> fulfillment :: events
 
 The following capabilities are deliberately not standalone modules yet: pricing, promotions, search, notifications, support, reporting, and platform operations. They will be extracted from an owning module only when their language, invariants, data ownership, and independent change pattern justify a boundary.
 
+## Cross-cutting HTTP contract
+
+HTTP response formatting is a transport convention, not a business module. Successful JSON business responses use a small envelope containing `code`, `message`, `data`, and transport `meta`. Errors use RFC 9457 `application/problem+json` with a stable module-owned `code` extension. HTTP status remains authoritative, and responses such as `204`, downloads, streams, health checks, and provider webhooks are not force-wrapped.
+
+Each module's `web` adapter owns mapping its use-case results and business exceptions to this wire contract. No `identity`, `common`, or shared business error package owns the response model.
+
 Rules for this view:
 
 - A module owns its state and business decisions.

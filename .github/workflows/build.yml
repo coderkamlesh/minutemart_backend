@@ -1,0 +1,78 @@
+name: Build and Push to GHCR
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        if: env.HAS_AZURE == 'true'
+        env:
+          HAS_AZURE: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/minutemart_backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/minutemart_backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Container Apps
+        if: env.HAS_AZURE == 'true'
+        env:
+          HAS_AZURE: ${{ secrets.AZURE_CREDENTIALS != '' }}
+        run: |
+          APP_NAME="${{ secrets.CONTAINER_APP_NAME || 'minutemart' }}"
+          RES_GROUP="${{ secrets.RESOURCE_GROUP || 'first' }}"
+
+          # Step 1: Secret set karo
+          if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+            az containerapp secret set \
+              -n "$APP_NAME" \
+              -g "$RES_GROUP" \
+              --secrets ghcr-pat="${{ secrets.GHCR_PAT }}"
+
+            # Step 2: Registry credentials set karo
+            az containerapp registry set \
+              -n "$APP_NAME" \
+              -g "$RES_GROUP" \
+              --server ghcr.io \
+              --username "${{ github.repository_owner }}" \
+              --password secretref:ghcr-pat
+          fi
+
+          # Step 3: Image update karo
+          az containerapp update \
+            -n "$APP_NAME" \
+            -g "$RES_GROUP" \
+            --image "ghcr.io/${{ github.repository_owner }}/minutemart_backend:${{ github.sha }}"
