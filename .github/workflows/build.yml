@@ -49,6 +49,7 @@ jobs:
 
       - name: Deploy to Container Apps
         if: env.HAS_AZURE == 'true'
+        continue-on-error: true
         env:
           HAS_AZURE: ${{ secrets.AZURE_CREDENTIALS != '' }}
         run: |
