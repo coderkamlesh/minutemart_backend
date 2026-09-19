@@ -17,7 +17,7 @@ RUN mvn dependency:go-offline -B
 
 # Source copy and compile native executable with memory limit for GraalVM
 COPY src ./src
-RUN mvn -Pnative native:compile -DskipTests -Dnative.buildArgs="-J-Xmx5120m --no-fallback"
+RUN mvn -Pnative native:compile -Dmaven.test.skip=true -Dnative.buildArgs="-J-Xmx5120m --no-fallback"
 
 # Stage 2: Minimal runtime
 FROM oraclelinux:9-slim

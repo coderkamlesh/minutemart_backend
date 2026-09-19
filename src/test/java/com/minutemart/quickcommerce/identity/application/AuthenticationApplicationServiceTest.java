@@ -1,5 +1,6 @@
 package com.minutemart.quickcommerce.identity.application;
 
+import com.minutemart.quickcommerce.identity.api.AuthenticationResult;
 import com.minutemart.quickcommerce.identity.api.ChangePasswordCommand;
 import com.minutemart.quickcommerce.identity.api.ClientApplication;
 import com.minutemart.quickcommerce.identity.api.IdentityRole;
