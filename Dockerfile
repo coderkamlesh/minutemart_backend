@@ -8,13 +8,16 @@ RUN microdnf install -y tar gzip && \
     ln -s /opt/apache-maven-3.9.9/bin/mvn /usr/local/bin/mvn && \
     microdnf clean all
 
+# Set Maven memory limit
+ENV MAVEN_OPTS="-Xmx1024m -XX:+UseSerialGC"
+
 # Dependencies layer caching
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Source copy and compile native executable
+# Source copy and compile native executable with memory limit for GraalVM
 COPY src ./src
-RUN mvn -Pnative native:compile -DskipTests
+RUN mvn -Pnative native:compile -DskipTests -Dnative.buildArgs="-J-Xmx5120m --no-fallback"
 
 # Stage 2: Minimal runtime
 FROM oraclelinux:9-slim
