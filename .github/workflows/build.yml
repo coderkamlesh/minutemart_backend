@@ -2,8 +2,8 @@ name: Build GraalVM Native Image and Deploy to AWS Lambda
 
 on:
   push:
-    branches:
-      - main
+    branches: [master,main]
+
 
 env:
   AWS_REGION: ap-south-1
