@@ -29,12 +29,12 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt
 WORKDIR /var/task
 
 # Stage 1 se compiled standalone native binary copy karo
-COPY --from=builder /build/target/quickcommerce ./app
-RUN chmod +x ./app
+COPY --from=builder /build/target/quickcommerce /var/task/app
+RUN chmod +x /var/task/app && ln -s /var/task/app /var/task/bootstrap
 
 # Web adapter configuration
 ENV PORT=8080
 ENV READINESS_CHECK_PORT=8080
 
-# Application start command
-CMD ["./app"]
+# Application start command (overriding default Lambda bootstrap lookup)
+ENTRYPOINT ["/var/task/app"]
