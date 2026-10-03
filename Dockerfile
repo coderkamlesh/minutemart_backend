@@ -1,32 +1,40 @@
-# Stage 1: Build native image with GraalVM 25
-FROM ghcr.io/graalvm/native-image-community:25 AS build
-WORKDIR /app
+# =========================================================================
+# Stage 1: Build GraalVM Native Executable
+# =========================================================================
+FROM ghcr.io/graalvm/native-image-community:21-ol9 AS builder
 
-# Install Maven
-RUN microdnf install -y tar gzip && \
-    curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz | tar -xz -C /opt && \
-    ln -s /opt/apache-maven-3.9.9/bin/mvn /usr/local/bin/mvn && \
-    microdnf clean all
+WORKDIR /build
 
-# Set Maven memory limit
-ENV MAVEN_OPTS="-Xmx1024m -XX:+UseSerialGC"
+# 1. Cache Maven Wrapper & POM dependencies
+COPY pom.xml mvnw ./
+COPY .mvn .mvn
+RUN ./mvnw dependency:go-offline -B
 
-# Dependencies layer caching
-COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Source copy and compile native executable with memory limit for GraalVM
+# 2. Copy source code
 COPY src ./src
-RUN mvn -Pnative native:compile -Dmaven.test.skip=true -Dnative.buildArgs="-J-Xmx5120m --no-fallback"
 
-# Stage 2: Minimal runtime
-FROM oraclelinux:9-slim
-WORKDIR /app
+# 3. Compile AOT (Ahead-of-Time) Native Binary
+# Note: GitHub Actions runner ke memory limit ko respect karne ke liye Xmx set kiya
+ENV MAVEN_OPTS="-Xmx5g"
+RUN ./mvnw -Pnative native:compile -DskipTests
 
-RUN adduser --system --uid 1001 spring
-USER spring:spring
+# =========================================================================
+# Stage 2: Ultra-minimal AWS Lambda Runtime
+# =========================================================================
+FROM public.ecr.aws/lambda/provided:al2023
 
-COPY --from=build /app/target/quickcommerce /app/quickcommerce
+# AWS Lambda Web Adapter: API Gateway requests ko localhost:8080 pe forward karega
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
 
-EXPOSE 8080
-ENTRYPOINT ["/app/quickcommerce"]
+WORKDIR /var/task
+
+# Stage 1 se compiled standalone native binary copy karo
+COPY --from=builder /build/target/app ./app
+RUN chmod +x ./app
+
+# Web adapter configuration
+ENV PORT=8080
+ENV READINESS_CHECK_PORT=8080
+
+# Application start command
+CMD ["./app"]
