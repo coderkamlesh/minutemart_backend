@@ -192,8 +192,8 @@ class AuthenticationApplicationServiceTest {
 
         assertNotNull(result);
         assertEquals(adminId, result.identityId());
-        assertEquals(IdentityRole.ADMIN, result.activeRole());
-        assertEquals(ScopeType.GLOBAL, result.activeScopeType());
+        assertEquals(IdentityRole.ADMIN, result.role());
+        assertEquals(ScopeType.GLOBAL, result.scopeType());
         assertEquals("token-1", result.accessToken());
         assertEquals("token-2", result.refreshToken());
         verify(sessions).save(any());
