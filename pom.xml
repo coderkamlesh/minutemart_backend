@@ -29,6 +29,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-modulith.version>2.0.8</spring-modulith.version>
+		<start-class>com.minutemart.quickcommerce.QuickcommerceApplication</start-class>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -117,6 +118,9 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<mainClass>com.minutemart.quickcommerce.QuickcommerceApplication</mainClass>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -129,6 +133,9 @@
 					<plugin>
 						<groupId>org.graalvm.buildtools</groupId>
 						<artifactId>native-maven-plugin</artifactId>
+						<configuration>
+							<mainClass>com.minutemart.quickcommerce.QuickcommerceApplication</mainClass>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

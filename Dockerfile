@@ -14,9 +14,9 @@ RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 COPY src ./src
 
 # 3. Compile AOT (Ahead-of-Time) Native Binary
-# Note: GitHub Actions runner ke memory limit ko respect karne ke liye Xmx set kiya
+# Note: process-aot explicitly executed to generate ApplicationContextInitializer
 ENV MAVEN_OPTS="-Xmx5g"
-RUN ./mvnw -Pnative native:compile -DskipTests
+RUN ./mvnw -Pnative clean compile spring-boot:process-aot native:compile -DskipTests
 
 # =========================================================================
 # Stage 2: Ultra-minimal AWS Lambda Runtime
