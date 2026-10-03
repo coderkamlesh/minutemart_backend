@@ -2,23 +2,23 @@ name: Build GraalVM Native Image and Deploy to AWS Lambda
 
 on:
   push:
-    branches: [main,master]
-
+    branches:
+      - main
 
 env:
-  AWS_REGION: ap-south-1  # Mumbai region (Apne hisab se change karein)
+  AWS_REGION: ap-south-1
+  # Secret ko env me map kar diya taaki condition me access ho sake
+  LAMBDA_FUNCTION_NAME: ${{ secrets.LAMBDA_FUNCTION_NAME }}
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30  # GraalVM build time leta hai, isliye timeout badhaya
+    timeout-minutes: 30
 
     steps:
-      # Step 1: Checkout repository
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Step 2: Configure AWS Credentials
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -26,12 +26,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # Step 3: Authenticate Docker with Amazon ECR
       - name: Log in to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      # Step 4: Build Native Docker Image & Push to ECR
       - name: Build, Tag, and Push Image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
@@ -46,18 +44,16 @@ jobs:
           
           echo "IMAGE_URI=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      # Step 5: Update AWS Lambda Function Code
-      # Step 5: Update AWS Lambda (Sirf tab chalega jab secret present ho)
+      # Yaha 'secrets' ke bajaye 'env' check kiya
       - name: Deploy Image to AWS Lambda
-        if: ${{ secrets.LAMBDA_FUNCTION_NAME != '' }}
+        if: env.LAMBDA_FUNCTION_NAME != ''
         run: |
           aws lambda update-function-code \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }} \
+            --function-name $LAMBDA_FUNCTION_NAME \
             --image-uri $IMAGE_URI
 
-      # Step 6: Wait for Update (Sirf tab chalega jab secret present ho)
       - name: Wait for Lambda Update
-        if: ${{ secrets.LAMBDA_FUNCTION_NAME != '' }}
+        if: env.LAMBDA_FUNCTION_NAME != ''
         run: |
           aws lambda wait function-updated \
-            --function-name ${{ secrets.LAMBDA_FUNCTION_NAME }}
+            --function-name $LAMBDA_FUNCTION_NAME
