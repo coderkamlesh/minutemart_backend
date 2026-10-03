@@ -29,7 +29,7 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt
 WORKDIR /var/task
 
 # Stage 1 se compiled standalone native binary copy karo
-COPY --from=builder /build/target/app ./app
+COPY --from=builder /build/target/quickcommerce ./app
 RUN chmod +x ./app
 
 # Web adapter configuration
