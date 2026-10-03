@@ -1,7 +1,8 @@
 # =========================================================================
 # Stage 1: Build GraalVM Native Executable
 # =========================================================================
-FROM ghcr.io/graalvm/native-image-community:21-ol9 AS builder
+# Spring Boot 4 requires GraalVM 25+ (reads the unified reachability-metadata.json emitted by Spring AOT)
+FROM ghcr.io/graalvm/native-image-community:25-ol9 AS builder
 
 WORKDIR /build
 
