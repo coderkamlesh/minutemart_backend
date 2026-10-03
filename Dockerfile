@@ -8,7 +8,7 @@ WORKDIR /build
 # 1. Cache Maven Wrapper & POM dependencies
 COPY pom.xml mvnw ./
 COPY .mvn .mvn
-RUN ./mvnw dependency:go-offline -B
+RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 
 # 2. Copy source code
 COPY src ./src
