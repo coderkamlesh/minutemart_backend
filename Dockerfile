@@ -13,10 +13,11 @@ RUN chmod +x mvnw && ./mvnw dependency:go-offline -B
 # 2. Copy source code
 COPY src ./src
 
-# 3. Compile AOT (Ahead-of-Time) Native Binary
-# Note: process-aot explicitly executed to generate ApplicationContextInitializer
+# 3. Generate the Spring AOT initializer, then compile the native image from target/classes
 ENV MAVEN_OPTS="-Xmx5g"
-RUN ./mvnw -Pnative clean compile spring-boot:process-aot native:compile -DskipTests
+RUN ./mvnw -Pnative clean compile spring-boot:process-aot -DskipTests \
+    && test -f target/classes/com/minutemart/quickcommerce/QuickcommerceApplication__ApplicationContextInitializer.class \
+    && ./mvnw -Pnative native:compile-no-fork -DskipTests
 
 # =========================================================================
 # Stage 2: Ultra-minimal AWS Lambda Runtime
