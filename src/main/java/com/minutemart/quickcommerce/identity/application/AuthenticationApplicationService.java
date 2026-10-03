@@ -32,6 +32,7 @@ import java.util.UUID;
 public class AuthenticationApplicationService implements IdentityAuthentication {
 
     private final IdentityAccountRepository identityAccounts;
+
     private final OtpChallengeRepository otpChallenges;
     private final AuthSessionRepository sessions;
     private final OtpDeliveryPort otpDelivery;
